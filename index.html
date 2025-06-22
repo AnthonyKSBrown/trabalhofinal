@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Jogo da Memória (2 jogadores)</title>
+<style>
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    background: #7f7e7edc;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+  }
+  h1 {
+    margin-bottom: 10px;
+    color: #222;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+  }
+  .placar {
+    background: rgba(255, 255, 255, 0.6);
+    padding: 10px 20px;
+    border-radius: 10px;
+    display: flex;
+    gap: 40px;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+  }
+  .placar div {
+    text-align: center;
+  }
+  .jogador1-label {
+    color: #0055ff; /* azul */
+    font-weight: bold;
+  }
+  .jogador2-label {
+    color: #ff0000; /* vermelho */
+    font-weight: bold;
+  }
+  .ativo {
+    text-shadow: 0 0 8px rgba(0,0,0,0.2);
+    text-decoration: underline;
+  }
+  .tabuleiro {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(70px, 100px));
+    gap: 15px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+  }
+  .carta {
+    width: 100px;
+    height: 100px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 2.5rem;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    position: relative;
+    transition: transform 0.4s ease;
+  }
+  .carta.virada {
+    transform: rotateY(180deg);
+  }
+  .carta span {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .carta span.frente {
+    background: #fff;
+  }
+  .carta span.verso {
+    background: #fffae3;
+    transform: rotateY(180deg);
+  }
+  .carta.combinada1 span.verso {
+    background: #73c0ff; /* azul claro */
+  }
+  .carta.combinada2 span.verso {
+    background: #ff7b7b; /* vermelho claro */
+  }
+</style>
+</head>
+<body>
+
+<h1>Jogo da Memória</h1>
+<div class="placar">
+  <div id="jogador1"><span class="jogador1-label">Jogador 1</span><br>Tentativas: <span id="tentativas1">0</span><br>Pontos: <span id="pontos1">0</span></div>
+  <div id="jogador2"><span class="jogador2-label">Jogador 2</span><br>Tentativas: <span id="tentativas2">0</span><br>Pontos: <span id="pontos2">0</span></div>
+</div>
+<div class="tabuleiro" id="tabuleiro"></div>
+
+<script>
+  const emojis = ['🍕','🍔','🍟','🌭','🍣','🍩','🍉','🍌','🍇','🍎'];
+  let cartas = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+
+  const tabuleiro = document.getElementById('tabuleiro');
+  let cartaVirada = null;
+  let travar = false;
+  let jogadorAtual = 1;
+  let tentativas = {1: 0, 2: 0};
+  let pontos = {1: 0, 2: 0};
+
+  function atualizaPlacar() {
+    document.getElementById('tentativas1').innerText = tentativas[1];
+    document.getElementById('tentativas2').innerText = tentativas[2];
+    document.getElementById('pontos1').innerText = pontos[1];
+    document.getElementById('pontos2').innerText = pontos[2];
+    document.getElementById('jogador1').classList.toggle('ativo', jogadorAtual === 1);
+    document.getElementById('jogador2').classList.toggle('ativo', jogadorAtual === 2);
+  }
+
+  cartas.forEach((emoji) => {
+    const carta = document.createElement('div');
+    carta.classList.add('carta');
+    carta.dataset.emoji = emoji;
+
+    const frente = document.createElement('span');
+    frente.classList.add('frente');
+    frente.innerText = '❓';
+
+    const verso = document.createElement('span');
+    verso.classList.add('verso');
+    verso.innerText = emoji;
+
+    carta.appendChild(frente);
+    carta.appendChild(verso);
+    tabuleiro.appendChild(carta);
+  });
+
+  tabuleiro.addEventListener('click', e => {
+    const carta = e.target.closest('.carta');
+    if (!carta || carta.classList.contains('virada') || carta.classList.contains('combinada1') || carta.classList.contains('combinada2') || travar) return;
+
+    carta.classList.add('virada');
+
+    if (!cartaVirada) {
+      cartaVirada = carta;
+    } else {
+      tentativas[jogadorAtual]++;
+      atualizaPlacar();
+
+      if (carta.dataset.emoji === cartaVirada.dataset.emoji) {
+        carta.classList.add(`combinada${jogadorAtual}`);
+        cartaVirada.classList.add(`combinada${jogadorAtual}`);
+        pontos[jogadorAtual]++;
+        cartaVirada = null;
+      } else {
+        travar = true;
+        setTimeout(() => {
+          carta.classList.remove('virada');
+          cartaVirada.classList.remove('virada');
+          cartaVirada = null;
+          jogadorAtual = jogadorAtual === 1 ? 2 : 1;
+          atualizaPlacar();
+          travar = false;
+        }, 1000);
+      }
+    }
+  });
+
+  atualizaPlacar();
+</script>
+
+</body>
+</html>
